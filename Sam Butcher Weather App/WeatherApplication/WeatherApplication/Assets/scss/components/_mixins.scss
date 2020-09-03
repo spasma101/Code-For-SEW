@@ -1,0 +1,159 @@
+/// <reference path="../style" />
+
+//media queries
+@mixin MQ($screen: false, $media: 'screen') {
+	@if $screen != false {
+		@media #{$media} and (min-width: $screen) {
+			@content
+		}
+	}  
+}
+
+@mixin MQs($screens...) {
+	@each $screen in $screens {
+		@include MQ($screen) {
+			@content
+		}
+	}
+}
+
+@mixin hide-text($hide: true) {
+	@if $hide == true{
+		text-indent : 200%;
+		white-space : nowrap;
+		overflow : hidden;
+	}
+	@else{
+		text-indent : 0;
+		white-space : normal;
+		overflow : visible;
+	}
+}
+
+// Hide but maintain for screen readers
+@mixin hide-text-spk {
+	position: absolute ;
+	clip: rect(1px 1px 1px 1px);
+	clip: rect(1px, 1px, 1px, 1px);
+}
+
+// Style the placeholder text
+@mixin placeholder() {
+	&::-webkit-input-placeholder {
+		@content
+	}
+
+	&::-moz-placeholder {
+		@content
+	}
+
+	&:-moz-placeholder {
+		@content
+	}
+
+	&:-ms-input-placeholder {
+		@content
+	}
+
+	&::-ms-input-placeholder {
+		@content
+	}
+
+	&::placeholder {
+		@content
+	}
+}
+
+@mixin clearfix($pseudo: false) {
+
+    @if($pseudo == true) {
+        &:after {
+            content: "";
+            display: block;
+            clear: both;
+        }
+    }
+    @else {
+        overflow: hidden;
+    }
+}
+
+@mixin icon($name, $color: $primary-action, $size: 20px, $alignment: 'before', $inline: true) {
+    $url-color: url-safe-color($color);
+
+    &:#{$alignment} {
+        content: "";
+        background: url('icons/#{$name}.svg?c=#{$url-color}') no-repeat center/contain; //$size $size;
+    }
+
+    @if(str-index(inspect(&), "icon-") == null) {
+
+        @if($inline) {
+            display: inline-flex;
+            align-items: center;
+            word-break: break-word;
+
+            &:#{$alignment} {
+                display: inline-block;
+                display: inline-flex;
+				align-self: center; // Safari Fix
+                flex: 0 0 $size;
+                width: $size;
+                height: $size
+            }
+        }
+        @else {
+            &:#{$alignment} {
+                display: block;
+                width: $size;
+                height: $size;
+                vertical-align: middle;
+            }
+        }
+    }
+}
+
+@mixin icon-color($name, $color, $pseudo: '') {
+
+	@if($pseudo != '') {
+		&:#{$pseudo} {
+			$url-color: url-safe-color($color);
+			background-image: url('icons/#{$name}.svg?c=#{$url-color}');
+		}
+	} @else {
+
+		$url-color: url-safe-color($color);
+		background-image: url('icons/#{$name}.svg?c=#{$url-color}');
+	}
+}
+
+@mixin after-triangle($color: $primary-action) {
+	position: relative;
+
+	&:after {
+		content: "";
+		position: absolute;
+		top: 0;
+		// left: 99%;
+		left: calc(100% - 2px);
+		height: 100%;
+		width: 50px;
+		background: url('images/after-triangle.svg?c=#{url-safe-color($color)}') no-repeat center center/cover;
+	}
+}
+
+@mixin title-line($color: $primary-action, $width: 50px) {
+	position: relative;
+
+	&:before {
+		content: "";
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		margin: auto;
+		left: -#{$width + 20};
+		width: $width;
+		height: 0;
+		border-top: 2px solid $color;
+	}
+}

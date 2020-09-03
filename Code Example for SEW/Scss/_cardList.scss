@@ -1,0 +1,120 @@
+.Card {
+
+    &__List {
+        display: flex; /* or inline-flex */
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        background-color: $of-light-blue;
+
+        & img {
+            width: 100%;
+        };
+
+        @include MQ(850px) 
+        {
+            margin: 0 20px 30px 20px;
+        }
+    }
+    &__Item {
+        flex-grow: 1;
+        flex-basis: 100%;
+        align-self: stretch;
+        margin: 15px;
+
+        // -webkit-box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.3);
+        // box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.3);
+
+        // &:hover {
+        //     transform: scale(1.05);
+        //     -webkit-box-shadow: 0px 0px 30px rgba(0, 0, 0, 0.3);
+        //     box-shadow: 0px 0px 30px rgba(0, 0, 0, 0.3);
+        // }
+        
+        @include MQ(600px) 
+        {
+            flex-basis: 47%;
+            margin: 10px;
+        }
+
+        @include MQ(1150px) {
+            flex-basis: 30%;
+        } 
+        
+        @include MQ(1500px) 
+        {
+            flex-basis: 23%;
+        }
+        @include MQ(2000px) 
+        {
+            flex-basis: 17%;
+        }
+
+        &__Content {
+            display: flex; /* or inline-flex */
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            min-height: 440px;
+            background-color: $white;
+
+            .card-img {
+                width: 100%;
+                display: block;
+                padding-top: 56.25%;
+                background-size: cover;
+                background-position: top center;
+            }
+
+            img {
+                min-height: 237px;
+                max-height: 247px;
+                flex-grow: 1;
+            }
+            
+            &__Header {
+                display: flex; /* or inline-flex */
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: flex-start;
+                align-items: center;
+
+                h2 {
+                    font-family: $main-body-heading-font;
+                    font-weight: 600;
+                    font-size: 1.25em;
+                    line-height: 130%;
+                    color: $of-dark-blue;
+                    padding: 15px 10px 0px 10px;
+                    flex-grow: 1;
+                    min-height: 67px;
+                }
+            }
+
+            &__Items {
+                display: flex; /* or inline-flex */
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: flex-start;
+                align-content: flex-end;
+                p {
+                    line-height: 140%;
+                    color: #666666;
+                    padding: 0 10px 10px 10px;
+                    flex-grow: 1;
+                    min-height: 80px;
+                }
+                
+                time {
+                    display: block;
+                    padding: 0 10px 10px 10px;
+                    line-height: 130%;
+                    color: $of-pink;
+                    font-size: 0.875em;
+                    font-weight: 700;
+                    flex-grow: 1;
+                }
+            }
+        }
+    }
+}

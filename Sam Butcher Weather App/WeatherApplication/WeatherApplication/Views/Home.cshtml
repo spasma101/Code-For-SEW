@@ -1,0 +1,45 @@
+﻿@inherits Umbraco.Web.Mvc.UmbracoTemplatePage<ContentModels.Home>
+@using ContentModels = Umbraco.Web.PublishedContentModels;
+@{
+    Layout = "_Master.cshtml";
+
+    var homepageTitle = Model.Content.GetPropertyValue("title");
+    var pageContent = Model.Content.GetPropertyValue("pageContent");
+}
+
+@if (Umbraco.MemberIsLoggedOn())
+{
+    <div class="Header">
+        <h1>@homepageTitle</h1>
+        <p id="result"></p>
+        <p>Enter a location below to get the weather for that town/city</p>
+        <label>Location: </label>
+        <input type="text" name="locationName" id="locationName" />
+        <button class="getWeather">Get Weather</button>
+        <button class="refreshWeather" style="display: none;">Refresh</button>
+        <p><span class="locationLookupError"></span></p>
+    </div>
+    <div class="loginLogoutContainer">
+
+        @{
+            Html.RenderAction("RenderLogout", "Member");
+        }
+    </div>
+    <div class="">
+        <p><span class="weatherLocation"></span> weather for today is:</p>
+        <ul class="weatherToday"></ul>
+    </div>
+
+    @Html.Partial("~/Views/Partials/_Weather.cshtml")
+
+
+
+
+
+}
+else
+{
+    <h1>You are currently not logged in...please do so</h1>
+    Html.RenderAction("RenderLogin", "Member");
+
+}

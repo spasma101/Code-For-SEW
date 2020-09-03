@@ -1,0 +1,17 @@
+﻿@inherits Umbraco.Web.Mvc.UmbracoTemplatePage
+@{
+    Layout = "_Master.cshtml";
+
+    var loginPageTitle = Model.Content.GetPropertyValue("title");
+    var loggedOutTitle = Model.Content.GetPropertyValue("loggedOutTitle");
+}
+            @if (Umbraco.MemberIsLoggedOn())
+            {
+                <h1>@loginPageTitle</h1>
+                Html.RenderAction("RenderLogout", "Member");
+            }
+            else
+            {
+                <h1>@loggedOutTitle</h1>
+                Html.RenderAction("RenderLogin", "Member");
+            }

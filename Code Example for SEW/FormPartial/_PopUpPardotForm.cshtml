@@ -1,0 +1,570 @@
+@using RestSharp.Extensions
+@using Umbraco.Web.Models
+@using System.Text.RegularExpressions
+@inherits Umbraco.Web.Macros.PartialViewMacroPage
+@{
+    //THIS IS THE DOC TYPE NAME ASSOCIATED TO THE FORM TEMPLATE
+    var pardotContactForm = Umbraco.TypedContentSingleAtXPath("//basicFormLayout");
+    //THIS CONTENT IS IN THE UMBRACO PAGE THIS FORM IS ASSIGNED TOO
+    var pageName = Model.Content.Name;
+    var bcIdName = "bob123" + "bcName123";
+    var URLScheme = Request.Url.Scheme;
+    var URLAuthority = Request.Url.Authority;
+    var actualUrl = Request.RawUrl;
+    var defaultThankyouPage = URLScheme + "://" + URLAuthority + "/static-pages/thank-you/";
+
+    var pageURL = URLScheme + "://" + URLAuthority + actualUrl;
+    var formTitle = pardotContactForm.GetPropertyValue("formTitle");
+    var gDPRContent = pardotContactForm.GetPropertyValue("gDPRContent");
+    var submitButtonText = pardotContactForm.GetPropertyValue("submitButtonText");
+
+    var thankyouLocation = pardotContactForm.GetPropertyValue("thankyouLocation");
+
+    var originalUrl = pageURL.Split('?')[0];
+
+    IContent BCContent = null;
+    var contentService = ApplicationContext.Current.Services.ContentService;
+
+    //int? BCNodeId = ContentGenerator.GetNodeIdbyBCRefNo(Request.QueryString["bcrefno"]);
+    int? BCNodeId;
+    int refHasLetters = Regex.Matches(Request.QueryString["bcrefno"], @"[a-zA-Z]").Count;
+
+    if (refHasLetters < 1)
+    {
+        BCNodeId = ContentGenerator.GetNodeIdbyBCRefNo(Request.QueryString["bcrefno"]);
+    }
+    else
+    {
+        BCNodeId = ContentGenerator.GetNodeIdbyBCRefNoSalesForce(Request.QueryString["bcrefno"]);
+    }
+
+    BCContent = contentService.GetById(BCNodeId ?? 0);
+
+    var bcName = BCContent.Name;
+
+    BCQuery.QueryRequest queryRequest = new BCQuery.QueryRequest();
+    var BCRefNo = Request.QueryString["bcrefno"].ToString();
+    var bcRefId = queryRequest.BCRefNo = BCRefNo;
+
+    var bcArea = BCContent.GetValue("town").ToString();
+
+
+    queryRequest.Location = new BCQuery.Location();
+    //var location = queryRequest.Location.PlaceName = Request.QueryString["location"].ToString();
+    var region = !queryRequest.Location.CountryCode.HasValue() ? queryRequest.Location.CountryCode = Request.QueryString["region"] : "REGION IS EMPTY";
+}
+
+<link href="~/css/basicFormLayout.css" rel="stylesheet" />
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<link rel="stylesheet" href="/resources/demos/style.css">
+
+
+<div class="basicFormLayout">
+    @if ((string)TempData["Error"] == "true")
+    {
+
+        <div class="alert alert-danger alert-dismissable text-center" id="bcErrorBlock" role="alert">there was an error.</div>
+
+    }
+    @if ((string)TempData["Success"] == "true")
+    {
+
+        if (string.IsNullOrWhiteSpace(thankyouLocation.ToString()))
+        {
+            Response.Redirect((string)TempData["RedirectUrl"] + "?Success=true#successMessage");
+        }
+        else
+        {
+            Response.Redirect(thankyouLocation.ToString());
+        }
+    }
+
+    @if (ViewBag.FormValidatorErrors != null)
+    {
+        <div class="alert alert-danger alert-dismissable text-center" role="alert">
+            @foreach (var item in ViewBag.FormValidatorErrors)
+            {
+                <div class="error">@item</div>
+            }
+        </div>
+    }
+
+    <div class="success" id="successMessage">Your form was submitted successfully, we'll be in touch soon.</div>
+
+
+    @using (Html.BeginUmbracoForm("BCContactForm", "BCContactFormSurface", null, new { id = "BCContactForm", @class = "form contact-form", @role = "form", @autocomplete = "on" }))
+    {
+
+        @Html.AntiForgeryToken()
+        <div class="pull-left col-xs-12" id="pardotContactUS">
+            <h1>@formTitle</h1>
+
+            <fieldset>
+                <!--First Name-->
+                <div class="cta-input-group col-md-4 basicFormLayout__field">
+                    @Html.Label("BCContactForm.FirstName", "First Name")
+                    @Html.TextBox("BCContactForm.FirstName", null, new { @class = "form__input", @placeholder = "Enter Here" })
+                </div>
+                <!--Last Name-->
+                <div class="cta-input-group col-md-4 basicFormLayout__field">
+                    @Html.Label("BCContactForm.LastName", "Last Name")
+                    @Html.TextBox("BCContactForm.LastName", null, new { @class = "form__input", @placeholder = "Enter Here" })
+                </div>
+                <!--Company Name-->
+                <div class="cta-input-group col-md-4 basicFormLayout__field">
+                    @Html.Label("BCContactForm.CompanyName", "Company Name")
+                    @Html.TextBox("BCContactForm.CompanyName", null, new { @class = "form__input", @placeholder = "Enter Here" })
+                </div>
+                <!--Email-->
+                <div class="cta-input-group col-md-6 basicFormLayout__field">
+                    @Html.Label("BCContactForm.Email", "Email")
+                    @Html.TextBox("BCContactForm.Email", null, new { @class = "form__input", @placeholder = "Enter Here" })
+                </div>
+                <!--Phone-->
+                <div class="cta-input-group col-md-6 basicFormLayout__field">
+                    @Html.Label("BCContactForm.Phone", "Phone")
+                    @Html.TextBox("BCContactForm.Phone", null, new { @class = "form__input", @placeholder = "Enter Here" })
+                </div>
+                <!--Size Required-->
+                <div class="cta-input-group col-md-4 basicFormLayout__field">
+                    @Html.Label("BCContactForm.SizeRequired", "Size Required")
+                    @Html.DropDownList("BCContactForm.SizeRequired", new SelectList(
+                        new List<object>
+                        {
+                            new {value = 1, text = "1 person/75 sq ft"},
+                            new {value = 2, text = "2 people/150 sq ft"},
+                            new {value = 3, text = "3 people/225 sq ft"},
+                            new {value = 4, text = "4 people/300 sq ft"},
+                            new {value = 5, text = "5 people/375 sq ft"},
+                            new {value = 6, text = "6 people/450 sq ft"},
+                            new {value = 7, text = "7 people/525 sq ft"},
+                            new {value = 8, text = "8 people/600 sq ft"},
+                            new {value = 9, text = "9 people/675 sq ft"},
+                            new {value = 10, text = "10 people/750 sq ft"},
+                            new {value = 15, text = "15 people/1125 sq ft"},
+                            new {value = 20, text = "20 people/1500 sq ft"},
+                            new {value = 25, text = "25 people/1875 sq ft"},
+                            new {value = 30, text = "30 people/2250 sq ft"},
+                            new {value = 40, text = "40 people/3000 sq ft"},
+                            new {value = 50, text = "50 people/3750 sq ft"},
+                            new {value = 75, text = "75 people/5625 sq ft"},
+                            new {value = 100, text = "100 people/7500 sq ft"},
+                            new {value = 150, text = "150 people/11250 sq ft"},
+                            new {value = 200, text = "200 people/15000 sq ft"},
+                            new {value = 250, text = "250 people/18750 sq ft"},
+                            new {value = 300, text = "300 people/22500 sq ft"},
+                            new {value = 350, text = "350 people/26250 sq ft"},
+                            new {value = 400, text = "400 people/30000 sq ft"},
+                            new {value = 450, text = "450 people/33750 sq ft"},
+                            new {value = 500, text = "500 people/37500 sq ft"},
+                            new {value = 0, text = "Virtual Office"},
+                            new {value = 0, text = "Meeting Room"}
+                        },
+                        "value",
+                        "text"
+                        ), "Select your option", new { @class = "form__input contactFormDropdownList", @placeholder = "Enter Here" })
+                </div>
+                <!--Viewing Date-->
+                <div class="cta-input-group col-md-4 basicFormLayout__field">
+                    <!-- Date Picker -->
+                    @Html.Label("BCContactForm.DatePicker", "Viewing Date")
+                    @Html.TextBox("BCContactForm.DatePicker", null, new { @class = "form__input", @placeholder = "Enter Here" })
+
+
+                    @*<div id="datepicker">
+                            <label for="BCContactForm_DatePicker">Viewing Date</label>
+                            <input class="form__input" type="text" id="BCContactForm_DatePicker" name="BCContactForm.DatePicker" value=dateSelectedFromPicker>
+                            <input id="datepicker-button">
+                            <div id="datepicker-container">
+                                <div class="datepicker-header">
+                                    <button class="datepicker-button-change" id="datepicker-previous-button"> - </button>
+                                    <div id="datepicker-indicator"></div>
+                                    <button class="datepicker-button-change" id="datepicker-next-button"> + </button>
+                                </div>
+                                <ul id="datepicker-week-title"></ul>
+                                <div id="datepicker-body"></div>
+                                <div class="datepicker-footer">
+                                    <span id="datepicker-selected-text"></span>
+                                    <button id="datepicker-clear-button">Clear</button>
+                                </div>
+                            </div>
+                        </div>*@
+                </div>
+                <!--Viewing Time-->
+                <div class="cta-input-group col-md-4 basicFormLayout__field">
+                    @Html.Label("BCContactForm.ViewingTime", "Viewing Time")
+                    @Html.DropDownList("BCContactForm.ViewingTime", new SelectList(
+                        new List<object>
+                        {
+                            new {value = "08:30:00", text = "08:30"},
+                            new {value = "08:45:00", text = "08:45"},
+                            new {value = "09:00:00", text = "09:00"},
+                            new {value = "09:15:00", text = "09:15"},
+                            new {value = "09:30:00", text = "09:30"},
+                            new {value = "09:45:00", text = "09:45"},
+                            new {value = "10:00:00", text = "10:00"},
+                            new {value = "10:15:00", text = "10:15"},
+                            new {value = "10:30:00", text = "10:30"},
+                            new {value = "10:45:00", text = "10:45"},
+                            new {value = "11:00:00", text = "11:00"},
+                            new {value = "11:15:00", text = "11:15"},
+                            new {value = "11:30:00", text = "11:30"},
+                            new {value = "11:45:00", text = "11:45"},
+                            new {value = "12:00:00", text = "12:00"},
+                            new {value = "12:15:00", text = "12:15"},
+                            new {value = "12:30:00", text = "12:30"},
+                            new {value = "12:45:00", text = "12:45"},
+                            new {value = "13:00:00", text = "13:00"},
+                            new {value = "13:15:00", text = "13:15"},
+                            new {value = "13:30:00", text = "13:30"},
+                            new {value = "13:45:00", text = "13:45"},
+                            new {value = "14:00:00", text = "14:00"},
+                            new {value = "14:15:00", text = "14:15"},
+                            new {value = "14:30:00", text = "14:30"},
+                            new {value = "14:45:00", text = "14:45"},
+                            new {value = "15:00:00", text = "15:00"},
+                            new {value = "15:15:00", text = "15:15"},
+                            new {value = "15:30:00", text = "15:30"},
+                            new {value = "15:45:00", text = "15:45"},
+                            new {value = "16:00:00", text = "16:00"},
+                            new {value = "16:15:00", text = "16:15"},
+                            new {value = "16:30:00", text = "16:30"},
+                            new {value = "16:45:00", text = "16:45"},
+                            new {value = "17:00:00", text = "17:00"},
+                            new {value = "17:15:00", text = "17:15"},
+                            new {value = "17:30:00", text = "17:30"},
+                            new {value = "17:45:00", text = "17:45"},
+                            new {value = "18:00:00", text = "18:00"}
+
+                        },
+                        "value",
+                        "text"
+                        ), "Select your time", new { @class = "form__input contactFormDropdownList", @placeholder = "Enter Here" })
+                </div>
+                <div class="cta-input-group col-md-12 basicFormLayout__field">
+                    @Html.Label("BCContactForm.Message", "Message")
+                    @Html.TextArea("BCContactForm.Message", null, new { @class = "form__input", @placeholder = "Enter Here" })
+                </div>
+
+
+                @if (!string.IsNullOrWhiteSpace(bcName))
+                {
+                    @Html.Hidden("BCContactForm.PageName", bcName + " | " + region)
+
+                }
+                else
+                {
+                    @Html.Hidden("BCContactForm.PageName", "NULL")
+                }
+                @if (!string.IsNullOrWhiteSpace(pageURL))
+                {
+                    @Html.Hidden("BCContactForm.PageURL", pageURL)
+                }
+                else
+                {
+                    @Html.Hidden("BCContactForm.PageURL", "NULL")
+                }
+                @if (!string.IsNullOrWhiteSpace(bcRefId.ToString()))
+                {
+                    @Html.Hidden("BCContactForm.bcRefId", bcRefId)
+                }
+                else
+                {
+                    @Html.Hidden("BCContactForm.bcRefId", "NULL")
+                }
+                @if (!string.IsNullOrWhiteSpace(originalUrl))
+                {
+                    @Html.Hidden("BCContactForm.OriginalUrl", originalUrl)
+                }
+                else
+                {
+                    @Html.Hidden("BCContactForm.OriginalUrl", "NULL")
+                }
+                @if (!string.IsNullOrWhiteSpace(bcArea))
+                {
+                    @Html.Hidden("BCContactForm.Area", bcArea)
+                }
+                else
+                {
+                    @Html.Hidden("BCContactForm.Area", "NULL")
+                }
+
+                <input type="hidden" id="BCContactForm_Region" name="BCContactForm.Region" value="@region">
+
+                <input type="hidden" id="GACLIENTID" name="GACLIENTID" value=clientId>
+                <input type="hidden" id="GATRACKID" name="GATRACKID" value=trackingId>
+
+                <div class="cta-input-group col-xs-12">
+                    <div class="g-recaptcha" style="margin: 10px 0;" data-sitekey="6Le0FecUAAAAAOCNd3C769XKW7OBmBUyzqehh5hH"></div>
+                    <div class="captchaError">
+                        <p>Error: Please complete reCaptcha</p>
+                    </div>
+                    <div class="captchaSuccess">
+                        <p>reCaptcha validated</p>
+                    </div>
+                </div>
+
+                <div class="progress-button col-xs-12" style="padding: 20px 10px;">
+                    <input type="submit" value="@submitButtonText" class="submit-tog" style="margin: auto; font-size: 13px; font-family: averta-bold; text-transform: uppercase; background-color: #5B288A; color: #fff; padding: 15px 20px; border-radius: 0; letter-spacing: 0.5px; border: 0; min-width: 8em; width: 100%; transition: all 0.3s ease;" />
+                </div>
+                <div class="col-md-12 col-sm-12 form-group">
+                    <span>@gDPRContent</span>
+                </div>
+            </fieldset>
+
+        </div>
+        <div class="clearfix"></div>
+    }
+
+</div>
+@*<script src="~/Scripts/Plugins/jquery-3.2.1.min.js"></script>*@
+@*<script src="~/Scripts/Plugins/jquery.validate.min.js"></script>*@
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script>
+    $(function () {
+        $("#BCContactForm_DatePicker").datepicker();
+    });
+</script>
+@*<script src="~/Scripts/BCContactForm.js"></script>*@
+<script>
+    $(document).ready(function () {
+
+
+        $('#bcQuickEnquiry').on('click',
+            function () {
+                //alert("clicked");
+                var myDiv = document.getElementById('BCContactForm');
+                scrollTo(document.body, myDiv.offsetTop, 100);
+            }
+        );
+
+        //Recapture Message Validation
+        $('.captchaError').hide();
+        $('.captchaError').css('display', 'none');
+        $('.captchaSuccess').hide();
+        $('.captchaSuccess').css('display', 'none');
+        $(".submit-tog").on('click',
+            function () {
+                var response = grecaptcha.getResponse();
+                if (response.length == 0) {
+                    //reCaptcha not verified
+                    $('.captchaError').show();
+                    $('.captchaError').css('display', 'block');
+                    $('.captchaSuccess').hide();
+                    $('.captchaSuccess').css('display', 'none');
+                } else {
+                    //reCaptch verified
+                    $('.captchaError').hide();
+                    $('.captchaError').css('display', 'none');
+                    $('.captchaSuccess').show();
+                    $('.captchaSuccess').css('display', 'block');
+                }
+            }
+        );
+
+        $("#BCContactForm").validate({
+
+            errorElement: "span",
+            errorClass: "error",
+            rules: {
+                "BCContactForm.FirstName": { required: true, maxlength: 50 },
+                "BCContactForm.LastName": { required: true, maxlength: 50 },
+                "BCContactForm.CompanyName": { required: true, maxlength: 50 },
+                "BCContactForm.Email": { required: true, email: true, maxlength: 50 },
+                "BCContactForm.Phone": { number: true, required: true, maxlength: 15, minlength: 11 },
+                "BCContactForm.SizeRequired": { required: true, maxlength: 100 },
+                "BCContactForm.Message": { maxlength: 500 },
+                "BCContactForm.DatePicker": { required: true, maxlength: 50 },
+                "BCContactForm.ViewingTime": { required: true, maxlength: 50 }
+
+            },
+            messages: {
+                "BCContactForm.FirstName": {
+                    required: "Please enter your First Name",
+                    maxlength: "Max length exceeded"
+                },
+                "BCContactForm.LastName": {
+                    required: "Please enter your Last Name",
+                    maxlength: "Max length exceeded"
+                },
+                "BCContactForm.CompanyName": {
+                    required: "Please enter your Company Name",
+                    maxlength: "Max length exceeded"
+                },
+                "BCContactForm.Email": {
+                    required: "Please enter your Email address",
+                    maxlength: "Max length exceeded"
+                },
+                "BCContactForm.Phone": {
+                    required: "Please enter your Phone number",
+                    maxlength: "Max length exceeded",
+                    minlength: "Min length not reached"
+                },
+                "BCContactForm.SizeRequired": {
+                    required: "Please enter your Size Required",
+                    maxlength: "Max length exceeded"
+                },
+                "BCContactForm.Message": {
+                    maxlength: "Max length 500 characters exceeded"
+                },
+                "BCContactForm.DatePicker": {
+                    required: "Please select a Date to view",
+                    maxlength: "Max length exceeded"
+                },
+                "BCContactForm.ViewingTime": {
+                    required: "Please select a viewing time",
+                    maxlength: "Max length exceeded"
+                }
+            }
+        });
+        //GET GA  DETAILS
+        ga(function () {
+            var tracker = ga.getAll()[0];
+            console.log(tracker);
+
+            var trackingId = tracker.get('trackingId');
+            document.getElementById('GATRACKID').value = trackingId;
+
+            var clientId = tracker.get('clientId');
+            document.getElementById('GACLIENTID').value = clientId;
+            console.log(clientId + ":" + trackingId);
+        });
+
+        //URL PARAM SCRAPE
+        var getUrlParameter = function getUrlParameter(sParam) {
+            var sPageURL = window.location.search.substring(1),
+                sURLVariables = sPageURL.split('&'),
+                sParameterName,
+                i;
+
+            for (i = 0; i < sURLVariables.length; i++) {
+                sParameterName = sURLVariables[i].split('=');
+
+                if (sParameterName[0] === sParam) {
+                    return sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
+                }
+            }
+        };
+
+        var success = getUrlParameter('Success');
+        //var blog = getUrlParameter('blog');
+        //Success hide or show
+        $('.success').hide();
+        $('.success').css('display', 'none;');
+        if (success) {
+            $('.success').show();
+            $('.success').css('display', 'block;');
+            $("#BCContactForm").hide();
+        }
+
+
+        //this is the id of the form//
+        $("#BCContactForm").submit(function (e) {
+
+
+            var response = grecaptcha.getResponse();
+            if (response.length == 0) {
+                e.preventDefault();
+            }
+            //Add the below to stop server side submission for JS testing
+            // e.preventDefault(); // avoid to execute the actual submit of the form.
+
+            var url = "SF-URL";
+            var data = {};
+            //Form Data
+            data.BCContactForm_FirstName = $('#BCContactForm_FirstName').val().trim();
+            data.BCContactForm_LastName = $('#BCContactForm_LastName').val().trim();
+            data.BCContactForm_CompanyName = $('#BCContactForm_CompanyName').val().trim();
+            data.BCContactForm_Email = $('#BCContactForm_Email').val().trim();
+            data.BCContactForm_Phone = $('#BCContactForm_Phone').val().trim();
+            data.BCContactForm_SizeRequired = $('#BCContactForm_SizeRequired').val().trim();
+            data.BCContactForm_Message = $('#BCContactForm_Message').val().trim();
+            data.BCContactForm_DatePicker = $('#BCContactForm_DatePicker').val().trim();
+            data.BCContactForm_ViewingTime = $('#BCContactForm_ViewingTime').val().trim();
+            data.BCContactForm_PageURL = $('#BCContactForm_PageURL').val().trim();
+            data.BCContactForm_bcRefId = $('#BCContactForm_bcRefId').val().trim();
+            data.BCContactForm_PageName = $('#BCContactForm_PageName').val().trim();
+            data.BCContactForm_OriginalUrl = $('#BCContactForm_OriginalUrl').val().trim();
+            data.BCContactForm_Region = $('#BCContactForm_Region').val().trim();
+            data.BCContactForm_Area = $('#BCContactForm_Area').val().trim();
+            //URL Params
+            data.BCContactForm_utm_term = getUrlParameter('utm_term');
+            data.BCContactForm_utm_source = getUrlParameter('utm_source');
+            data.BCContactForm_utm_medium = getUrlParameter('utm_medium');
+            data.BCContactForm_utm_content = getUrlParameter('utm_content');
+            data.BCContactForm_utm_campaign = getUrlParameter('utm_campaign');
+            data.BCContactForm_agid = getUrlParameter('agid');
+            data.BCContactForm_ntrk = getUrlParameter('ntrk');
+            data.BCContactForm_cop = getUrlParameter('cop');
+            data.BCContactForm_adposition = getUrlParameter('adposition');
+
+            //GA Details
+            data.BCContactForm_GACLIENTID = $('#GACLIENTID').val().trim();
+            data.BCContactForm_GATRACKID = $('#GATRACKID').val().trim();
+            //data.PardotContactForm_GAUSERID = $('#GAUSERID').val().trim();
+            data.BCContactForm_GCLID = getUrlParameter('gclid');
+
+            //URLS NEEDED FOR THESE, OR LET CONTROLLER AND VIEW HANDLE
+            //data.success_location = "";
+            //data.error_location = "";
+            $.ajax({
+                type: "POST",
+                enctype: "application/x-www-form-urlencoded",
+                url: url,
+                data: {
+                    //Fields
+                    "BCContactForm_FirstName": data.BCContactForm_FirstName,
+                    "BCContactForm_LastName": data.BCContactForm_LastName,
+                    "BCContactForm_CompanyName": data.BCContactForm_CompanyName,
+                    "BCContactForm_Email": data.BCContactForm_Email,
+                    "BCContactForm_Phone": data.BCContactForm_Phone,
+                    "BCContactForm_SizeRequired": data.BCContactForm_SizeRequired,
+                    "BCContactForm_Message": data.BCContactForm_Message,
+                    "BCContactForm_DatePicker": data.BCContactForm_DatePicker,
+                    "BCContactForm_ViewingTime": data.BCContactForm_ViewingTime,
+                    "BCContactForm_PageURL": data.BCContactForm_PageURL,
+                    "BCContactForm_bcRefId": data.BCContactForm_bcRefId,
+                    "BCContactForm_PageName": data.BCContactForm_PageName,
+                    "BCContactForm_OriginalUrl": data.BCContactForm_OriginalUrl,
+                    "BCContactForm_Region": data.BCContactForm_Region,
+                    "BCContactForm_Area": data.BCContactForm_Area,
+                    //URL Params
+                    "BCContactForm_utm_term": data.BCContactForm_utm_term,
+                    "BCContactForm_utm_source": data.BCContactForm_utm_source,
+                    "BCContactForm_utm_medium": data.BCContactForm_utm_medium,
+                    "BCContactForm_utm_content": data.BCContactForm_utm_content,
+                    "BCContactForm_utm_campaign": data.BCContactForm_utm_campaign,
+                    "BCContactForm_agid": data.BCContactForm_agid,
+                    "BCContactForm_ntrk": data.BCContactForm_ntrk,
+                    "BCContactForm_cop": data.BCContactForm_cop,
+                    "BCContactForm_adposition": data.BCContactForm_adposition,
+                    //GA Details
+                    "BCContactForm_GACLIENTID": data.BCContactForm_GACLIENTID,
+                    "BCContactForm_GATRACKID": data.BCContactForm_GATRACKID,
+                    //"PardotContactForm_GAUSERID": data.PardotContactForm_GAUSERID,
+                    "BCContactForm_GCLID": data.BCContactForm_GCLID
+                },
+                //data: JSON.stringify(data),
+                contentType: "application/json; charset=utf-8",
+                dataType: "jsonp",
+                jsonpCallback: 'processJSONPResponse', // add this property
+                success: function (result, status, xhr) {
+                    console.log(result, status, error, xhr.status);
+                    // if (result === "no_errors") {
+                    //     location.href = "http://www.example.com/ThankYou.html";
+
+                    // }
+                },
+                error: function (xhr, status, error) {
+                    console.log("Result: " + status + " " + error + " " + xhr.status + " " + xhr.statusText + " " + data);
+                }
+            }).done(function (response) {
+                console.log(response);
+            }).fail(function (response) {
+                console.log('Error: ' + response);
+            });
+
+            
+        });
+    });</script>
